@@ -21,6 +21,9 @@ RUN ln -fs /usr/share/zoneinfo/America/Chicago /etc/localtime && \
 
 RUN wget -O - http://ompl.kavrakilab.org/install-ompl-ubuntu.sh | bash -s -- --python --app
 
+ENV OMPL_VERSION 1.4.0
+RUN rm -rf /omplapp-$OMPL_VERSION-Source/
+
 # Configure environment
 ENV CONDA_DIR=/opt/conda \
     SHELL=/bin/bash \
@@ -49,6 +52,11 @@ RUN useradd -m -s /bin/bash -N -u $ENV_UID $ENV_USER && \
 
 USER $ENV_UID
 
+# Fix PYTHONPATH
+RUN cp /etc/skel/.bashrc $HOME/.bashrc && \
+    echo \
+    'export PYTHONPATH=$(python3 -c "import sys; print(\":\".join(sys.path))"):/usr/local/lib/python3/dist-packages' >> $HOME/.bashrc
+
 # Setup work directory for backward-compatibility
 RUN mkdir /home/$ENV_USER/work && \
     fix-permissions $HOME
@@ -56,3 +64,5 @@ RUN mkdir /home/$ENV_USER/work && \
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
 WORKDIR /home/$ENV_USER/work
+
+ENTRYPOINT ["/bin/bash"]
